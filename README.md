@@ -1,5 +1,5 @@
 # Avro serialization study
-
+[![Build Status](https://circleci.com/gh/martijnblankestijn/akka-avro-serialization-poc.svg?style=shield&circle-token=:circle-token)](https://circleci.com/gh/martijnblankestijn/akka-avro-serialization-poc)
 Study of using Avro as the serialization mechanism for messages and events.
 
 ## Focus
