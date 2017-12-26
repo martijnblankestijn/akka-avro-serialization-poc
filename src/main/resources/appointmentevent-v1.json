@@ -1,0 +1,11 @@
+{
+  "type": "record",
+  "name": "AppointmentCreatedV1",
+  "namespace": "nl.codestar.domain",
+  "fields": [
+    {
+      "name": "id",
+      "type": "string"
+    }
+  ]
+}

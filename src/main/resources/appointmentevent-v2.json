@@ -1,0 +1,38 @@
+{
+  "type": "record",
+  "name": "AppointmentCreatedV2",
+  "namespace": "nl.codestar.domain",
+  "fields": [
+    {
+      "name": "id",
+      "type": "string"
+    },
+    {
+      "name": "subject",
+      "type": "string",
+      "default": "DBZ_KW"
+    },
+    {
+      "name": "start",
+      "type": "string",
+      "default": "2017-12-31T12:34:45Z"
+    },
+    {
+      "name": "branchOffice",
+      "type": [
+        "null",
+        {
+          "type": "record",
+          "name": "BranchOfficeV1",
+          "fields": [
+            {
+              "name": "branchId",
+              "type": "string"
+            }
+          ]
+        }
+      ],
+      "default": null
+    }
+  ]
+}
