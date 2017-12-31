@@ -32,18 +32,17 @@ import org.apache.avro.Schema.Type.STRING
 import scala.reflect.ClassTag
 
 object AvroCommandSerializer {
-  def writeBinary[T](t: T)(implicit schemaFor: SchemaFor[T], toRecord: ToRecord[T]): Array[Byte] = {
+  def writeBinary[T: SchemaFor: ToRecord](t: T): Array[Byte] = {
     val output = new ByteArrayOutputStream
-    val os     = AvroBinaryOutputStream(output)(schemaFor, toRecord)
+    val os     = AvroBinaryOutputStream(output)(implicitly[SchemaFor[T]], implicitly[ToRecord[T]])
     os.write(t)
     os.close()
     output.toByteArray
   }
 
-  def readBinary[T](bytes: Array[Byte])(implicit schemaFor: SchemaFor[T],
-                                        fromRecord: FromRecord[T]): T = {
+  def readBinary[T: SchemaFor: FromRecord](bytes: Array[Byte]): T = 
     getRecord(new AvroBinaryInputStream[T](new ByteArrayInputStream(bytes)))
-  }
+  
 
   def getRecord[T](is: AvroBinaryInputStream[T]): T = {
     def handleError(t: Throwable): T = {
@@ -94,14 +93,11 @@ class AvroCommandSerializer(system: ExtendedActorSystem) extends Serializer {
     create[CreateAppointmentV3]
   )
 
-  private def create[T](
-      implicit schemaFor: SchemaFor[T],
-      toRecord: ToRecord[T],
-      fromRecord: FromRecord[T],
-      clazz: ClassTag[T]): (Class[_], (AnyRef => Array[Byte], Array[Byte] => AnyRef)) = {
-    (clazz.runtimeClass,
-     (anyRef => writeBinary(anyRef.asInstanceOf[T])(schemaFor, toRecord),
-      bytes => readBinary(bytes)(schemaFor, fromRecord).asInstanceOf[AnyRef]))
+  private def create[T: SchemaFor: ToRecord: FromRecord: ClassTag]: 
+  (Class[_], (AnyRef => Array[Byte], Array[Byte] => AnyRef)) = {
+    (implicitly[ClassTag[T]].runtimeClass,
+     (anyRef => writeBinary(anyRef.asInstanceOf[T])(implicitly[SchemaFor[T]], implicitly[ToRecord[T]]),
+      bytes => readBinary(bytes)(implicitly[SchemaFor[T]], implicitly[FromRecord[T]]).asInstanceOf[AnyRef]))
   }
 
   override def identifier: Int = 990001
