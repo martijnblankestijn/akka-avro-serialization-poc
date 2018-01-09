@@ -17,8 +17,29 @@ but this will bring some challenges.
 
 ## How to use
 
+- start Cassandra on port 9042. I use Docker for that, see the shell-script in the root of the project.
+- start the server
+
+
+### Running Cassandra
+If using a Mac, like I do, make sure that you can use docker.
+
+I use docker-machine with the default image aptly called `default`. 
+If it isn't running already (check with `docker-machine ls`), do so with `docker-machine start default`. 
+
+Make sure the environment-variables of the VM on which your container will run is available.
+Do this through the `eval "$(docker-machine env default)"` command.
+
+Execute the shell script `./cassandra.sh`.
+
+
 ### Running the server
-I just execute `nl.codestar.api.Server` from my IDE (IntelliJ).
+I just execute `nl.codestar.api.Server` from my IDE (IntelliJ),
+which will use as a default the configuration for `server-1`.
+
+You can supply a commandline argument like `nl.codestar.api.Server server-2`. 
+The first commandline argument is the name of the file on the classpath that will be loaded. 
+
 See below why it does not work with sbt yet.
 
 ## Resources

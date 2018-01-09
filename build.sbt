@@ -7,22 +7,27 @@ name := "akka-avro-serialization-poc"
 startYear := Some(2017)
 licenses += ("Apache-2.0", new URL("https://www.apache.org/licenses/LICENSE-2.0.txt"))
 
-val scalaTestVersion = "3.0.4"
-val akkaVersion      = "2.5.8"
-val akkaHttpVersion  = "10.0.11"
+val scalaTestVersion                = "3.0.4"
+val akkaVersion                     = "2.5.8"
+val akkaHttpVersion                 = "10.0.11"
+val akkaPersistenceCassandraVersion = "0.80"
 
 libraryDependencies ++= Seq(
-  "com.typesafe.akka"         %% "akka-actor"             % akkaVersion,
-  "com.typesafe.akka"         %% "akka-slf4j"             % akkaVersion, // needed for logging filter akka.event.slf4j.Slf4jLoggingFilter
-  "com.typesafe.akka"         %% "akka-persistence"       % akkaVersion,
-  "com.typesafe.akka"         %% "akka-persistence-query" % akkaVersion, // query-side of cqrs
-  "com.typesafe.akka"         %% "akka-http"              % akkaHttpVersion,
-  "com.typesafe.akka"         %% "akka-http-spray-json"   % akkaHttpVersion,
-  "ch.qos.logback"            % "logback-classic"         % "1.2.3",
-  "org.fusesource.leveldbjni" % "leveldbjni-all"          % "1.8",
-  "com.sksamuel.avro4s"       %% "avro4s-core"            % "1.8.0",
-  "com.typesafe.akka"         %% "akka-testkit"           % akkaVersion % "test",
-  "org.scalatest"             %% "scalatest"              % scalaTestVersion % "test"
+  "com.typesafe.akka"         %% "akka-actor"                 % akkaVersion,
+  "com.typesafe.akka"         %% "akka-slf4j"                 % akkaVersion, // needed for logging filter akka.event.slf4j.Slf4jLoggingFilter
+  "com.typesafe.akka"         %% "akka-persistence"           % akkaVersion,
+  "com.typesafe.akka"         %% "akka-persistence-query"     % akkaVersion, // query-side of cqrs
+  "com.typesafe.akka"         %% "akka-http"                  % akkaHttpVersion,
+  "com.typesafe.akka"         %% "akka-http-spray-json"       % akkaHttpVersion,
+  "com.typesafe.akka"         %% "akka-cluster"               % akkaVersion,
+  "com.typesafe.akka"         %% "akka-cluster-sharding"      % akkaVersion,
+  "com.typesafe.akka"         %% "akka-cluster-tools"         % akkaVersion,
+  "com.typesafe.akka"         %% "akka-persistence-cassandra" % akkaPersistenceCassandraVersion,
+  "ch.qos.logback"            % "logback-classic"             % "1.2.3",
+  "org.fusesource.leveldbjni" % "leveldbjni-all"              % "1.8",
+  "com.sksamuel.avro4s"       %% "avro4s-core"                % "1.8.0",
+  "com.typesafe.akka"         %% "akka-testkit"               % akkaVersion % "test",
+  "org.scalatest"             %% "scalatest"                  % scalaTestVersion % "test"
 )
 
 // run scalafmt automatically before compiling for all projects

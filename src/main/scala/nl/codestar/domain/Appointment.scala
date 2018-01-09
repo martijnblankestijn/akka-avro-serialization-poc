@@ -90,7 +90,9 @@ class Appointment extends PersistentActor with ActorLogging {
       app = evt
     case _ =>
       log.error(
-        "Ignoring event {} as this is an outdated version. Only used to get an entry in the event store to test upcasting",
-        evt)
+        "Ignoring event, class = {}, id = {} as this is an outdated version. Only used to get an entry in the event store to test upcasting",
+        evt.getClass,
+        evt.id
+      )
   }
 }

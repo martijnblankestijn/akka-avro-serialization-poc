@@ -19,7 +19,9 @@ package nl.codestar.domain
 import java.time.ZonedDateTime
 import java.util.UUID
 
-sealed trait AppointmentEvent
+sealed trait AppointmentEvent {
+  def id: UUID
+}
 
 // ugly version numbers in case class names
 // in 'real life' only the latest would exist

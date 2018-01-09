@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<configuration debug="false">
+<configuration debug="false" scan="true">
 
     <appender name="console" class="ch.qos.logback.core.ConsoleAppender">
         <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
@@ -10,6 +10,29 @@
         </encoder>
     </appender>
 
+    
+    <logger name="akka.remote.EndpointWriter" level="INFO" />
+    
+    <logger name="akka.serialization" level="INFO" />
+    
+    <!-- Logging only relevant to silence Leveldb Journal
+    <logger name="akka.persistence.query.journal.leveldb.LiveEventsByPersistenceIdPublisher" level="INFO" />
+    <logger name="akka.persistence.query.journal.leveldb.LiveEventsByTagPublisher" level="INFO" />
+    -->
+
+    <logger name="akka.persistence.cassandra.query.EventsByTagStage" level="INFO" />
+
+    
+    <logger name="nl.codestar.persistence.DomainObjectEventAdapter" level="INFO" />
+    <logger name="nl.codestar.serializers.AppointmentEventAvroSerializer" level="INFO" />
+    <logger name="nl.codestar.serializers.AvroCommandSerializer" level="INFO" />
+    
+    
+    <logger name="com.datastax.driver" level="INFO" />
+    <logger name="com.codahale.metrics" level="INFO" />
+    
+    
+    
     <root level="debug">
         <appender-ref ref="console"/>
     </root>

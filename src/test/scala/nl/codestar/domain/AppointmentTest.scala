@@ -36,8 +36,7 @@ class AppointmentTest extends FunSpec with Matchers {
     val schemaV2: Schema = readSchema("appointmentevent-v2.json")
     val schemaV3: Schema = readSchema("appointmentevent-v3.json")
 
-    val expectedV1 = Seq(AppointmentCreatedV1(randomUUID()),
-                         AppointmentCreatedV1(randomUUID()))
+    val expectedV1 = Seq(AppointmentCreatedV1(randomUUID()), AppointmentCreatedV1(randomUUID()))
     val expectedV2 = Seq(
       AppointmentCreatedV2(randomUUID(), "DBZ_KW", ZonedDateTime.now, None),
       AppointmentCreatedV2(randomUUID(),
@@ -91,21 +90,16 @@ class AppointmentTest extends FunSpec with Matchers {
       writeBinary[AppointmentCreatedV1](expectedV1, theFile)
 
       val defaultSubjectFromSchema = "DBZ_KW"
-      val defaultDateFromSchema = ZonedDateTime.parse("2017-12-31T12:34:45Z")
-      val expectedWithDefaultsV2 = expectedV1.map(
-        v1 =>
-          AppointmentCreatedV2(v1.id,
-                               defaultSubjectFromSchema,
-                               defaultDateFromSchema))
-      val expectedWithDefaultsV3 = expectedWithDefaultsV2.map(v2 =>
-        AppointmentCreatedV3(v2.id, v2.subject, v2.start))
+      val defaultDateFromSchema    = ZonedDateTime.parse("2017-12-31T12:34:45Z")
+      val expectedWithDefaultsV2 = expectedV1.map(v1 =>
+        AppointmentCreatedV2(v1.id, defaultSubjectFromSchema, defaultDateFromSchema))
+      val expectedWithDefaultsV3 =
+        expectedWithDefaultsV2.map(v2 => AppointmentCreatedV3(v2.id, v2.subject, v2.start))
       // YES !! If you want to have backward compatibility provide both the schema that was used to write
       // AND the schema used to read it now.
       // The 'trick' came from https://stackoverflow.com/questions/34733604/avro-schema-doesnt-honor-backward-compatibilty
-      assert(
-        read[AppointmentCreatedV2](theFile, schemaV1, schemaV2) === expectedWithDefaultsV2)
-      assert(
-        read[AppointmentCreatedV3](theFile, schemaV1, schemaV3) === expectedWithDefaultsV3)
+      assert(read[AppointmentCreatedV2](theFile, schemaV1, schemaV2) === expectedWithDefaultsV2)
+      assert(read[AppointmentCreatedV3](theFile, schemaV1, schemaV3) === expectedWithDefaultsV3)
     }
 
     it("should be forwards compatible") {
@@ -117,8 +111,7 @@ class AppointmentTest extends FunSpec with Matchers {
           AppointmentCreatedV2(v3.id,
                                v3.subject,
                                v3.start,
-                               v3.branchOffice.map(o =>
-                                 BranchOfficeV1(o.branchId))))
+                               v3.branchOffice.map(o => BranchOfficeV1(o.branchId))))
       val expectedV1 = expectedV2.map(v2 => AppointmentCreatedV1(v2.id))
 
       read[AppointmentCreatedV1](file, schemaV3, schemaV1) should contain theSameElementsAs expectedV1
@@ -127,7 +120,7 @@ class AppointmentTest extends FunSpec with Matchers {
 
     it("should measure the file size with and without schema") {
       val withoutSchema = new File("without-schema.avro")
-      val withSchema = new File("wit-schema.avro")
+      val withSchema    = new File("wit-schema.avro")
 
       writeBinary[AppointmentCreatedV2](expectedV2 ++ expectedV2, withoutSchema)
       writeData[AppointmentCreatedV2](expectedV2 ++ expectedV2, withSchema)
@@ -144,8 +137,7 @@ class AppointmentTest extends FunSpec with Matchers {
     readAndReturn(is)
   }
 
-  private def read[T: SchemaFor: FromRecord](file: File,
-                                             schema: Schema): Seq[T] = {
+  private def read[T: SchemaFor: FromRecord](file: File, schema: Schema): Seq[T] = {
     val is = AvroInputStream.binary[T](file, schema)
     readAndReturn(is)
   }
@@ -155,8 +147,7 @@ class AppointmentTest extends FunSpec with Matchers {
     readAndReturn(is)
   }
 
-  private def readAndReturn[T: SchemaFor: FromRecord](
-      is: AvroBinaryInputStream[T]) = {
+  private def readAndReturn[T: SchemaFor: FromRecord](is: AvroBinaryInputStream[T]) = {
     val appointments = is.iterator().toSeq
     is.close()
     appointments

@@ -19,27 +19,39 @@ package nl.codestar.api
 import java.time.ZonedDateTime
 import java.util.UUID
 
-import akka.actor.ActorSystem
+import akka.actor.{Actor, ActorLogging, ActorSystem, Props}
+import akka.cluster.singleton.{ClusterSingletonManager, ClusterSingletonManagerSettings}
 import akka.event.Logging
+import akka.event.Logging.DebugLevel
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.server.Directives.{JavaUUID, pathPrefix, _}
 import akka.http.scaladsl.server.Route
 import akka.pattern.ask
+import akka.persistence.cassandra.query.scaladsl.CassandraReadJournal
+import akka.persistence.cassandra.query.scaladsl.CassandraReadJournal.Identifier
+import akka.persistence.query.{Offset, PersistenceQuery}
 import akka.stream.ActorMaterializer
+import akka.stream.Attributes.logLevels
+import akka.stream.scaladsl.Sink.ignore
 import akka.util.Timeout
+import com.typesafe.config.ConfigFactory
+import nl.codestar.api.PersistenceQuerySingleton.End
 import nl.codestar.domain._
 
 import scala.concurrent.duration._
 
 object Server extends App {
+  val configName = if (args.length > 0) args(0) else "server-1"
 
-  implicit val system           = ActorSystem("appointmentSystem")
+  private val config            = ConfigFactory.load(configName)
+  implicit val system           = ActorSystem("appointmentSystem", config)
   implicit val executionContext = system.dispatcher
   implicit val materializer     = ActorMaterializer()
   implicit val timeout          = Timeout(5 seconds)
 
-  val logger       = Logging(system, getClass)
-  val appointments = system.actorOf(Appointments.props(), "appointments")
+  private val serverName = config.getString("server.http.host")
+  val log                = Logging(system, getClass)
+  val appointments       = system.actorOf(Appointments.props(), "appointments")
 
   val route: Route =
     pathPrefix("appointments") {
@@ -56,7 +68,6 @@ object Server extends App {
         pathEnd {
           post {
             complete {
-              println("Creating three different entities to test the versions.")
               val versions = List(
                 CreateAppointmentV1(UUID.randomUUID()),
                 CreateAppointmentV2(UUID.randomUUID(),
@@ -68,7 +79,9 @@ object Server extends App {
                                     ZonedDateTime.now,
                                     Some(BranchOfficeV2("54321", Some(UUID.randomUUID()))))
               )
-              versions.foreach { appointments ! _ }
+              versions.foreach { v =>
+                (appointments ? v).map(_ => log.debug(s"$v is done."))
+              }
               "OK"
             }
           } ~
@@ -78,11 +91,53 @@ object Server extends App {
         }
     }
 
-  Http().bindAndHandle(route, "localhost", 8080) map { binding =>
-    logger.info(s"REST interface bound to ${binding.localAddress}")
+  system.actorOf(
+    ClusterSingletonManager.props(
+      singletonProps = PersistenceQuerySingleton.props("appointment"),
+       "END", //      terminationMessage = End, // NOT SURE IF I AM GOING TO USE THIS ONE
+      settings = ClusterSingletonManagerSettings(system).withRole("event-processor")
+    ),
+    name = "eventProcessor"
+  )
+  private val serverPort = config.getInt("server.http.port")
+
+  Http().bindAndHandle(route, serverName, serverPort) map { binding =>
+    log.info(s"REST interface bound to ${binding.localAddress}")
   } recover {
     case ex =>
-      logger.error(s"REST interface could not bind", ex.getMessage)
+      log.error(s"REST interface could not bind", ex.getMessage)
   }
 
+}
+
+object PersistenceQuerySingleton {
+  def props(tag: String)(implicit materializer: ActorMaterializer) =
+    Props(new PersistenceQuerySingleton(tag))
+
+  sealed trait Message
+
+  // TODO this should be Avro serializable (or just implement ??)
+  case object End extends Message
+
+}
+
+class PersistenceQuerySingleton(tag: String)(implicit materializer: ActorMaterializer)
+    extends Actor
+    with ActorLogging {
+  private implicit val executionContext = context.system.dispatcher
+
+  log.info(s"PersistenceQuerySingleton starting for tag $tag")
+
+  PersistenceQuery(context.system)
+    .readJournalFor[CassandraReadJournal](Identifier)
+    .eventsByTag(tag, Offset.noOffset)
+    .map(e => {println(s"ENVELOPE: $e");e})
+    .log(tag, _.toString)
+    .withAttributes(logLevels(onElement = DebugLevel))
+    .runWith(ignore)
+
+  override def receive: Receive = {
+    case End => log.info("Ending ...")
+    case x   => log.debug(s"New message: $x")
+  }
 }

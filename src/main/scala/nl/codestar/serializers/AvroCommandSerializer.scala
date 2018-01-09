@@ -40,9 +40,8 @@ object AvroCommandSerializer {
     output.toByteArray
   }
 
-  def readBinary[T: SchemaFor: FromRecord](bytes: Array[Byte]): T = 
+  def readBinary[T: SchemaFor: FromRecord](bytes: Array[Byte]): T =
     getRecord(new AvroBinaryInputStream[T](new ByteArrayInputStream(bytes)))
-  
 
   def getRecord[T](is: AvroBinaryInputStream[T]): T = {
     def handleError(t: Throwable): T = {
@@ -74,6 +73,7 @@ object AvroCommandSerializer {
 
   private def throwManifestRequired(clazz: Class[_]) =
     throw new NotSerializableException(s"Manifest required for [$clazz]")
+
 }
 
 class AvroCommandSerializer(system: ExtendedActorSystem) extends Serializer {
@@ -93,11 +93,14 @@ class AvroCommandSerializer(system: ExtendedActorSystem) extends Serializer {
     create[CreateAppointmentV3]
   )
 
-  private def create[T: SchemaFor: ToRecord: FromRecord: ClassTag]: 
-  (Class[_], (AnyRef => Array[Byte], Array[Byte] => AnyRef)) = {
+  private def create[T: SchemaFor: ToRecord: FromRecord: ClassTag]
+    : (Class[_], (AnyRef => Array[Byte], Array[Byte] => AnyRef)) = {
     (implicitly[ClassTag[T]].runtimeClass,
-     (anyRef => writeBinary(anyRef.asInstanceOf[T])(implicitly[SchemaFor[T]], implicitly[ToRecord[T]]),
-      bytes => readBinary(bytes)(implicitly[SchemaFor[T]], implicitly[FromRecord[T]]).asInstanceOf[AnyRef]))
+     (anyRef =>
+        writeBinary(anyRef.asInstanceOf[T])(implicitly[SchemaFor[T]], implicitly[ToRecord[T]]),
+      bytes =>
+        readBinary(bytes)(implicitly[SchemaFor[T]], implicitly[FromRecord[T]])
+          .asInstanceOf[AnyRef]))
   }
 
   override def identifier: Int = 990001
