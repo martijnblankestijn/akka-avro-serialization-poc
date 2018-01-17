@@ -19,7 +19,7 @@ package nl.codestar.api
 import java.time.ZonedDateTime
 import java.util.UUID
 
-import akka.actor.{Actor, ActorLogging, ActorSystem, Props}
+import akka.actor.{Actor, ActorLogging, ActorRef, ActorSystem, Props}
 import akka.cluster.singleton.{ClusterSingletonManager, ClusterSingletonManagerSettings}
 import akka.event.Logging
 import akka.event.Logging.DebugLevel
@@ -35,7 +35,6 @@ import akka.stream.Attributes.logLevels
 import akka.stream.scaladsl.Sink.ignore
 import akka.util.Timeout
 import com.typesafe.config.ConfigFactory
-import nl.codestar.api.PersistenceQuerySingleton.End
 import nl.codestar.domain._
 
 import scala.concurrent.duration._
@@ -51,7 +50,7 @@ object Server extends App {
 
   private val serverName = config.getString("server.http.host")
   val log                = Logging(system, getClass)
-  val appointments       = system.actorOf(Appointments.props(), "appointments")
+  val appointments       = system.actorOf(ShardedAppointments.props(), "appointments")
 
   val route: Route =
     pathPrefix("appointments") {
@@ -91,14 +90,35 @@ object Server extends App {
         }
     }
 
-  system.actorOf(
-    ClusterSingletonManager.props(
-      singletonProps = PersistenceQuerySingleton.props("appointment"),
-       "END", //      terminationMessage = End, // NOT SURE IF I AM GOING TO USE THIS ONE
-      settings = ClusterSingletonManagerSettings(system).withRole("event-processor")
-    ),
-    name = "eventProcessor"
-  )
+  private val eventProcessorRole = "event-processor"
+
+  private def initializePersistenceQuery: ActorRef = {
+    system.actorOf(
+      ClusterSingletonManager.props(
+        singletonProps = PersistenceQuerySingleton.props("appointment"),
+        "END", //      terminationMessage = End, // NOT SURE IF I AM GOING TO USE THIS ONE
+        settings = ClusterSingletonManagerSettings(system).withRole(eventProcessorRole)
+      ),
+      name = "eventProcessor"
+    )
+  }
+
+  val persistenceQuerySingleton  = 
+    if(hasEventProcessorRole) {
+      log.info("Current node has role '{}'", eventProcessorRole)
+      initializePersistenceQuery
+    }
+    else {
+      log.info("Current node does NOT have role '{}", eventProcessorRole)
+      system.actorOf(Props(new Actor { override def receive: Receive = { case _ => /* ignore all */ } }))
+    }
+
+  private def hasEventProcessorRole = {
+    system.settings.config.getStringList("akka.cluster.roles").contains(eventProcessorRole)
+  }
+
+  log.info("Persistence Query: {}", persistenceQuerySingleton)
+  
   private val serverPort = config.getInt("server.http.port")
 
   Http().bindAndHandle(route, serverName, serverPort) map { binding =>
@@ -115,10 +135,6 @@ object PersistenceQuerySingleton {
     Props(new PersistenceQuerySingleton(tag))
 
   sealed trait Message
-
-  // TODO this should be Avro serializable (or just implement ??)
-  case object End extends Message
-
 }
 
 class PersistenceQuerySingleton(tag: String)(implicit materializer: ActorMaterializer)
@@ -131,13 +147,12 @@ class PersistenceQuerySingleton(tag: String)(implicit materializer: ActorMateria
   PersistenceQuery(context.system)
     .readJournalFor[CassandraReadJournal](Identifier)
     .eventsByTag(tag, Offset.noOffset)
-    .map(e => {println(s"ENVELOPE: $e");e})
     .log(tag, _.toString)
     .withAttributes(logLevels(onElement = DebugLevel))
     .runWith(ignore)
 
   override def receive: Receive = {
-    case End => log.info("Ending ...")
-    case x   => log.debug(s"New message: $x")
+    case "End" => log.info("Ending ...")
+    case x     => log.debug(s"New message: $x")
   }
 }

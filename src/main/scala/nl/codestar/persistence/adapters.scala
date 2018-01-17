@@ -3,15 +3,13 @@ package nl.codestar.persistence
 import akka.persistence.journal.{Tagged, WriteEventAdapter}
 import nl.codestar.domain.AppointmentEvent
 import org.slf4j.LoggerFactory.getLogger
+import DomainObjectEventAdapter._
 
 class DomainObjectEventAdapter extends WriteEventAdapter {
-  private val logger = getLogger(classOf[DomainObjectEventAdapter])
-  private val tags   = Set("appointment")
 
   override def manifest(event: Any): String = ""
   override def toJournal(event: Any): Any = {
-    if (logger.isDebugEnabled())
-      logger.debug("Tagging event {} with {}", eventToString(event), tags, "")
+    if (logger.isDebugEnabled()) logger.debug("Tagging event {} with {}", eventToString(event), tags, "")
 
     event match {
       case _: AppointmentEvent => Tagged(event, tags)
@@ -19,6 +17,10 @@ class DomainObjectEventAdapter extends WriteEventAdapter {
     }
   }
 
-  private def eventToString(event: Any): String =
-    event.toString.replace('\n', ' ')
+  private def eventToString(event: Any): String = event.toString.replace('\n', ' ')
+}
+
+object DomainObjectEventAdapter {
+  private val logger = getLogger(classOf[DomainObjectEventAdapter])
+  private val tags   = Set("appointment")
 }

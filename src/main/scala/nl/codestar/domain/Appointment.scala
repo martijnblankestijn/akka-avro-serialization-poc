@@ -22,22 +22,51 @@ import java.util.UUID
 import akka.Done
 import akka.actor.{Actor, ActorLogging, Props}
 import akka.persistence.{PersistentActor, RecoveryCompleted}
+import ShardedAppointments._
+import akka.cluster.sharding.{ClusterSharding, ClusterShardingSettings, ShardRegion}
 
-object Appointments {
-  def props() = Props(new Appointments)
+object ShardedAppointments {
+  def props() = Props(new ShardedAppointments)
+
+  val shardName = "appointments"
+
+  // Partial function to extract the entity id from the message
+  // to send to the entity from the incoming message.
+  // If the partial function does not match,
+  // the message will be `unhandled`, i.e. posted as `Unhandled` messages on the event stream
+  val extractEntityId: ShardRegion.ExtractEntityId = {
+    case a: AppointmentCommand ⇒ (a.id.toString, a)
+  }
+
+  // Partial function to extract the shard if from the message
+  // From the docs:
+  // "For a specific entity identifier the shard identifier must always be the same.
+  // Otherwise the entity actor might accidentally be started in several places at the same time."
+  // As a rule of thumb, the number of shards should be a factor ten greater than the planned maximum number of cluster nodes.
+  val extractShardId: ShardRegion.ExtractShardId = {
+    case a: AppointmentCommand ⇒ {
+      val shard = a.id.hashCode() % 2
+      println(s">>> Shard: $shard")
+      shard.toString
+    }
+  }
 }
 
-class Appointments extends Actor with ActorLogging {
+class ShardedAppointments extends Actor with ActorLogging {
+
+  ClusterSharding(context.system).start(
+    typeName = shardName,
+    entityProps = Appointment.props(),
+    settings = ClusterShardingSettings(context.system),
+    extractEntityId = extractEntityId,
+    extractShardId = extractShardId
+  )
+  val shardRegion = ClusterSharding(context.system).shardRegion(shardName)
+
   override def receive: Receive = {
     case c: AppointmentCommand =>
-      def getChild =
-        context
-          .child(c.id.toString)
-          .getOrElse(context.actorOf(Appointment.props(), c.id.toString))
-
       log.debug("Forwarding appointment command {}", c)
-
-      getChild forward c
+      shardRegion forward c
   }
 }
 

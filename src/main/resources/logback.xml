@@ -10,8 +10,10 @@
         </encoder>
     </appender>
 
-    
+    <!-- Tame the logging of the Remote/Cluster/Persistence part -->
     <logger name="akka.remote.EndpointWriter" level="INFO" />
+    <logger name="akka.cluster.ddata.Replicator" level="INFO" />
+    <logger name="akka.persistence.cassandra.query.EventsByTagStage" level="INFO" />
     
     <logger name="akka.serialization" level="INFO" />
     
@@ -19,9 +21,6 @@
     <logger name="akka.persistence.query.journal.leveldb.LiveEventsByPersistenceIdPublisher" level="INFO" />
     <logger name="akka.persistence.query.journal.leveldb.LiveEventsByTagPublisher" level="INFO" />
     -->
-
-    <logger name="akka.persistence.cassandra.query.EventsByTagStage" level="INFO" />
-
     
     <logger name="nl.codestar.persistence.DomainObjectEventAdapter" level="INFO" />
     <logger name="nl.codestar.serializers.AppointmentEventAvroSerializer" level="INFO" />
