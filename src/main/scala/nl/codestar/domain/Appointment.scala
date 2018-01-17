@@ -28,7 +28,9 @@ import akka.cluster.sharding.{ClusterSharding, ClusterShardingSettings, ShardReg
 object ShardedAppointments {
   def props() = Props(new ShardedAppointments)
 
-  val shardName = "appointments"
+  val shardName      = "appointments"
+  val numberOfShards = 100
+  private val mod    = numberOfShards / 2 // hashcode can be negative
 
   // Partial function to extract the entity id from the message
   // to send to the entity from the incoming message.
@@ -45,9 +47,7 @@ object ShardedAppointments {
   // As a rule of thumb, the number of shards should be a factor ten greater than the planned maximum number of cluster nodes.
   val extractShardId: ShardRegion.ExtractShardId = {
     case a: AppointmentCommand ⇒ {
-      val shard = a.id.hashCode() % 2
-      println(s">>> Shard: $shard")
-      shard.toString
+      (a.id.hashCode() % mod).toString
     }
   }
 }
