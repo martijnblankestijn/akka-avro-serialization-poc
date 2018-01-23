@@ -9,7 +9,8 @@ class DomainObjectEventAdapter extends WriteEventAdapter {
 
   override def manifest(event: Any): String = ""
   override def toJournal(event: Any): Any = {
-    if (logger.isDebugEnabled()) logger.debug("Tagging event {} with {}", eventToString(event), tags, "")
+    if (logger.isDebugEnabled())
+      logger.debug("Tagging event {} with {}", eventToString(event), tags, "")
 
     event match {
       case _: AppointmentEvent => Tagged(event, tags)

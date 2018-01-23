@@ -28,9 +28,9 @@ class AppointmentTest extends FunSpec with Matchers {
   }
 
   describe("serialization") {
-    val fileV1 = new File("appointment-v1.avro")
-    val fileV2 = new File("appointment-v2.avro")
-    val fileV3 = new File("appointment-v3.avro")
+    val fileV1 = new File("target/appointment-v1.avro")
+    val fileV2 = new File("target/appointment-v2.avro")
+    val fileV3 = new File("target/appointment-v3.avro")
 
     val schemaV1: Schema = readSchema("appointmentevent-v1.json")
     val schemaV2: Schema = readSchema("appointmentevent-v2.json")
@@ -85,7 +85,7 @@ class AppointmentTest extends FunSpec with Matchers {
     }
 
     it("should be backwards compatible") {
-      val theFile = new File("appointment-backwards.avro")
+      val theFile = new File("target/appointment-backwards.avro")
 
       writeBinary[AppointmentCreatedV1](expectedV1, theFile)
 
@@ -103,7 +103,7 @@ class AppointmentTest extends FunSpec with Matchers {
     }
 
     it("should be forwards compatible") {
-      val file = new File("appointment-forward.avro")
+      val file = new File("target/appointment-forward.avro")
       writeBinary[AppointmentCreatedV3](expectedV3, file)
 
       val expectedV2 = expectedV3.map(
@@ -119,8 +119,8 @@ class AppointmentTest extends FunSpec with Matchers {
     }
 
     it("should measure the file size with and without schema") {
-      val withoutSchema = new File("without-schema.avro")
-      val withSchema    = new File("wit-schema.avro")
+      val withoutSchema = new File("target/without-schema.avro")
+      val withSchema    = new File("target/with-schema.avro")
 
       writeBinary[AppointmentCreatedV2](expectedV2 ++ expectedV2, withoutSchema)
       writeData[AppointmentCreatedV2](expectedV2 ++ expectedV2, withSchema)
