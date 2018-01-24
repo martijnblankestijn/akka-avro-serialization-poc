@@ -28,6 +28,10 @@ import akka.pattern.ask
 import akka.stream.ActorMaterializer
 import akka.util.Timeout
 import com.typesafe.config.{Config, ConfigFactory}
+import kamon.Kamon
+import kamon.jaeger.Jaeger
+import kamon.prometheus.PrometheusReporter
+import kamon.zipkin.ZipkinReporter
 import nl.codestar.api.Server._
 import nl.codestar.domain._
 import nl.codestar.persistence.PersistenceQuerySingleton
@@ -36,6 +40,9 @@ import scala.concurrent.ExecutionContext
 import scala.concurrent.duration._
 
 object Main extends App {
+  Kamon.addReporter(new PrometheusReporter())
+  Kamon.addReporter(new ZipkinReporter())
+//  Kamon.addReporter(new Jaeger())
   def configName = if (args.length > 0) args(0) else "server-1"
 
   val server = new Server(ConfigFactory.load(configName))
