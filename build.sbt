@@ -7,6 +7,9 @@ name := "akka-avro-serialization-poc"
 startYear := Some(2017)
 licenses += ("Apache-2.0", new URL("https://www.apache.org/licenses/LICENSE-2.0.txt"))
 
+// to test the path of
+resolvers += Resolver.bintrayRepo("kamon-io", "snapshots")
+
 val scalaTestVersion                = "3.0.4"
 val akkaVersion                     = "2.5.8"
 val akkaHttpVersion                 = "10.0.11"
@@ -28,7 +31,7 @@ libraryDependencies ++= Seq(
   "org.fusesource.leveldbjni" % "leveldbjni-all"              % "1.8",
   "com.sksamuel.avro4s"       %% "avro4s-core"                % "1.8.0",
   "io.kamon"                  %% "kamon-core"                 % kamonVersion,
-  "io.kamon"                  %% "kamon-akka-2.5"             % kamonVersion,
+  "io.kamon"                  %% "kamon-akka-2.5"             % "1.0.1-a044c45062347e28c193e37afbe8a318ac430f",
   "io.kamon"                  %% "kamon-akka-http-2.5"        % kamonVersion,
   "io.kamon"                  %% "kamon-akka-remote-2.5"      % kamonVersion,
   "io.kamon"                  %% "kamon-prometheus"           % kamonVersion,
