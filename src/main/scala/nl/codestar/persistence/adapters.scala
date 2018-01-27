@@ -1,9 +1,15 @@
 package nl.codestar.persistence
 
-import akka.persistence.journal.{Tagged, WriteEventAdapter}
-import nl.codestar.domain.AppointmentEvent
+import akka.persistence.journal._
+import nl.codestar.domain.{
+  AppointmentCreatedV1,
+  AppointmentCreatedV2,
+  AppointmentCreatedV3,
+  AppointmentEvent
+}
 import org.slf4j.LoggerFactory.getLogger
 import DomainObjectEventAdapter._
+import AppointmentEventEnricher._
 
 class DomainObjectEventAdapter extends WriteEventAdapter {
 
@@ -24,4 +30,14 @@ class DomainObjectEventAdapter extends WriteEventAdapter {
 object DomainObjectEventAdapter {
   private val logger = getLogger(classOf[DomainObjectEventAdapter])
   private val tags   = Set("appointment")
+}
+
+class AppointmentEventEnricher extends ReadEventAdapter {
+  override def fromJournal(event: Any, manifest: String): EventSeq = {
+    logger.debug(event.toString)
+    EventSeq.single(event)
+  }
+}
+object AppointmentEventEnricher {
+  private val logger = getLogger(classOf[AppointmentEventEnricher])
 }
