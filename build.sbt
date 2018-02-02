@@ -31,7 +31,7 @@ libraryDependencies ++= Seq(
   "org.fusesource.leveldbjni" % "leveldbjni-all"              % "1.8",
   "com.sksamuel.avro4s"       %% "avro4s-core"                % "1.8.0",
   "io.kamon"                  %% "kamon-core"                 % kamonVersion,
-  "io.kamon"                  %% "kamon-akka-2.5"             % "1.0.1-a044c45062347e28c193e37afbe8a318ac430f",
+  "io.kamon"                  %% "kamon-akka-2.5"             % "1.0.1",
   "io.kamon"                  %% "kamon-akka-http-2.5"        % kamonVersion,
   "io.kamon"                  %% "kamon-akka-remote-2.5"      % kamonVersion,
   "io.kamon"                  %% "kamon-prometheus"           % kamonVersion,

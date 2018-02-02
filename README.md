@@ -84,6 +84,28 @@ there is no deployment of new versions of commands without downtime.
 New nodes will not understand the old command and vice-versa.
 So for a cluster,you will also need versioning of commands or introduction of new commands.
 
+## Monitoring
+As an experiment added [Kamon](http://kamon.io/) to monitor the application.
+First hick-up was a NullPointerException on version 1.0.0 for which I made an [issue](https://github.com/kamon-io/kamon-akka-remote/issues/9#issuecomment-360953598).
+This was resolved quickly.
+
+In it's current setup, it uses [Zipkin](https://zipkin.io/) and [Prometheus](https://prometheus.io/).
+
+For Zipkin I used a docker container that can be started with `docker run -d -p 9411:9411 openzipkin/zipkin`.
+To see the traces, go to [http://192.168.99.100:9411/zipkin/](http://192.168.99.100:9411/zipkin/).
+The 192.168.99.100 is the ip-address of the Docker-host on my Mac.
+
+The Prometheus Reporter of Kamon start an embedded http server on [http://0.0.0.0:9095](http://0.0.0.0:9095).
+I just downloaded Prometheus, added that endpoint to the configuration file `prometheus.yml` in the root of Prometheus:
+
+```yaml
+
+    static_configs:
+      - targets: ['localhost:9090', 'localhost:9095']
+```  
+The results can be queried on [http://0.0.0.0:9090/graph](http://0.0.0.0:9090/graph).
+
+
 ## Loose ends
 
 ### AppointmentEventAvroSerializer.toBinary
